@@ -1,1 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEM Spike Risk & Vulnerability Framework</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  --bg: #060a12;
+  --surface: #0b1120;
+  --surface2: #101828;
+  --border: #1c2a42;
+  --border2: #243350;
+  --text: #dce8f5;
+  --muted: #5a7090;
+  --muted2: #3d5070;
+  --accent: #f59e0b;
+  --red: #ef4444;
+  --orange: #f97316;
+  --yellow: #eab308;
+  --green: #22c55e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
 
+/* HEADER */
+header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+}
+.header-left {}
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--accent);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.tagline { font-size: 12px; color: var(--muted); font-weight: 300; }
+.header-right {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted2);
+  text-align: right;
+  line-height: 1.8;
+}
+
+/* STATE SLIDERS */
+.sliders-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.slider-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+.slider-state {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.slider-sublabel {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.slider-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--green), var(--yellow), var(--orange), var(--red));
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 8px rgba(245,158,11,0.6);
+  cursor: pointer;
+}
+.spike-badge {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 68px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+/* MAIN CONTENT */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  flex: 1;
+}
+
+/* MAP */
+.map-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.card-header {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#map { flex: 1; min-height: 430px; }
+
+/* RIGHT PANEL */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* STAKEHOLDER TABS */
+.tab-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  padding: 9px 6px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted);
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.tab:last-child { border-right: none; }
+.tab.active { color: var(--accent); background: rgba(245,158,11,0.06); }
+.tab:hover:not(.active) { color: var(--text); background: rgba(255,255,255,0.02); }
+.tab-content { padding: 12px 14px; display: none; }
+.tab-content.active { display: block; }
+.tab-desc {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.tab-focus {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--accent);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+/* REGION DETAIL CARD */
+.detail-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px;
+  flex: 1;
+}
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--muted2);
+  font-size: 11px;
+  text-align: center;
+  gap: 8px;
+  line-height: 1.7;
+}
+.ph-icon { font-size: 24px; opacity: 0.2; }
+.detail { display: none; flex-direction: column; gap: 10px; }
+.detail.show { display: flex; }
+
+.d-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+.d-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* Decision chain */
+.chain {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 10px 12px;
+}
+.chain-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.chain-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.chain-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  width: 110px;
+  flex-shrink: 0;
+}
+.chain-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+}
+.chain-bar { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.chain-fill { height: 100%; border-radius: 2px; transition: width 0.35s, background 0.35s; }
+.chain-arrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted2);
+  text-align: center;
+  margin: 3px 0;
+}
+.chain-output {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.chain-output-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--muted);
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.badge {
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 500;
+  border: 1px solid;
+  flex: 1;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.action-box {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.action-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.action-text {
+  font-size: 10.5px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+/* PRIORITY RANKING */
+.ranking-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.ranking-list { padding: 8px 0; }
+.rank-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-bottom: 1px solid rgba(28,42,66,0.5);
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-item:hover { background: rgba(255,255,255,0.025); }
+.rank-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--muted2);
+  width: 18px;
+  flex-shrink: 0;
+}
+.rank-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.rank-info { flex: 1; min-width: 0; }
+.rank-name { font-size: 12px; font-weight: 500; line-height: 1; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-sub { font-family: 'IBM Plex Mono', monospace; font-size: 8px; color: var(--muted); letter-spacing: 0.5px; }
+.rank-score {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* LEGEND */
+.legend {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+.legend-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.lgrid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+.litem { padding: 8px 10px; border-radius: 5px; border: 1px solid; }
+.ldot { width: 7px; height: 7px; border-radius: 50%; margin-bottom: 5px; }
+.lcat { font-size: 10px; font-weight: 600; margin-bottom: 3px; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.5px; }
+.ldesc { font-size: 9px; opacity: 0.6; line-height: 1.5; }
+.note {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8px;
+  color: var(--muted2);
+  text-align: center;
+  margin-top: 10px;
+}
+.leaflet-container { background: #060a12 !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="eyebrow">FIT5145 · Monash University · Framework Demo · 2026</div>
+    <h1>NEM Price Spike Risk &amp; Community Vulnerability</h1>
+    <div class="tagline">Identifies which communities need protection before electricity price spikes occur</div>
+  </div>
+  <div class="header-right">
+    States: NSW · VIC · SA<br>
+    Geography: SA2 Level<br>
+    Data: Simulated
+  </div>
+</header>
+
+<!-- THREE STATE SLIDERS -->
+<div class="sliders-row">
+  <div class="slider-card">
+    <div class="slider-state" style="color:#f59e0b">South Australia</div>
+    <div class="slider-sublabel">NEM Region Spike Forecast</div>
+    <div class="slider-row-inner">
+      <input type="range" id="sl-SA" min="0" max="100" value="35">
+      <div class="spike-badge" id="lb-SA" style="color:var(--green)">Low</div>
+    </div>
+  </div>
+  <div class="slider-card">
+    <div class="slider-state" style="color:#38bdf8">Victoria</div>
+    <div class="slider-sublabel">NEM Region Spike Forecast</div>
+    <div class="slider-row-inner">
+      <input type="range" id="sl-VIC" min="0" max="100" value="35">
+      <div class="spike-badge" id="lb-VIC" style="color:var(--green)">Low</div>
+    </div>
+  </div>
+  <div class="slider-card">
+    <div class="slider-state" style="color:#a78bfa">New South Wales</div>
+    <div class="slider-sublabel">NEM Region Spike Forecast</div>
+    <div class="slider-row-inner">
+      <input type="range" id="sl-NSW" min="0" max="100" value="35">
+      <div class="spike-badge" id="lb-NSW" style="color:var(--green)">Low</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- MAP -->
+  <div class="map-card">
+    <div class="card-header">Real Geography — SA2 Approximate Centroids &nbsp;·&nbsp; Click any marker to inspect &nbsp;·&nbsp; Top 3 per state shown larger</div>
+    <div id="map"></div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- STAKEHOLDER TABS -->
+    <div class="tab-card">
+      <div class="tabs">
+        <div class="tab active" onclick="setTab('gov',this)">Government</div>
+        <div class="tab" onclick="setTab('retailer',this)">Retailer</div>
+        <div class="tab" onclick="setTab('ngo',this)">NGO</div>
+      </div>
+      <div class="tab-content active" id="tab-gov">
+        <div class="tab-focus">AEMC · State Government · Regulators</div>
+        <div class="tab-desc">Target subsidy deployment, hardship policy activation, and demand response programs toward communities with the highest combined spike exposure and socioeconomic vulnerability.</div>
+      </div>
+      <div class="tab-content" id="tab-retailer">
+        <div class="tab-focus">AGL · Origin Energy · EnergyAustralia</div>
+        <div class="tab-desc">Use spike risk signals to pre-activate hardship protocols, suspend disconnection orders, and communicate proactively with at-risk customers before price events arrive.</div>
+      </div>
+      <div class="tab-content" id="tab-ngo">
+        <div class="tab-focus">Brotherhood of St Laurence · Anglicare · Salvos</div>
+        <div class="tab-desc">Deploy field workers and pre-position emergency resources toward structurally vulnerable communities — both during spike events and during calm periods for long-term relationship building.</div>
+      </div>
+    </div>
+
+    <!-- REGION DETAIL -->
+    <div class="detail-card">
+      <div class="card-header" style="padding:0 0 8px; border:none;">Region Detail</div>
+      <div class="placeholder" id="ph">
+        <div class="ph-icon">◎</div>
+        <div>Click any region on the map to inspect its decision chain and recommended action</div>
+      </div>
+      <div class="detail" id="det">
+        <div>
+          <div class="d-name" id="dn"></div>
+          <div class="d-meta" id="dm"></div>
+        </div>
+        <div class="chain">
+          <div class="chain-title">Decision Chain</div>
+          <div class="chain-row">
+            <div class="chain-label">Spike Risk (region)</div>
+            <div class="chain-val" id="c-spike"></div>
+            <div class="chain-bar"><div class="chain-fill" id="cb-spike"></div></div>
+          </div>
+          <div class="chain-row">
+            <div class="chain-label">Vulnerability (SA2)</div>
+            <div class="chain-val" id="c-vuln"></div>
+            <div class="chain-bar"><div class="chain-fill" id="cb-vuln" style="background:var(--accent)"></div></div>
+          </div>
+          <div class="chain-arrow">↓ &nbsp;SpikeRisk × Vulnerability → Priority Score</div>
+          <div class="chain-output">
+            <div class="chain-output-label">Priority Score</div>
+            <div class="chain-val" id="c-priority" style="margin-right:8px"></div>
+            <div class="badge" id="cbadge"></div>
+          </div>
+        </div>
+        <div class="action-box">
+          <div class="action-label" id="action-stakeholder-label">Recommended Action</div>
+          <div class="action-text" id="act"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRIORITY RANKING -->
+    <div class="ranking-card">
+      <div class="card-header">Top 5 Priority SA2s — All States</div>
+      <div class="ranking-list" id="ranking"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-title">2×2 Priority Framework</div>
+  <div class="lgrid">
+    <div class="litem" style="background:rgba(239,68,68,0.08);border-color:#ef4444">
+      <div class="ldot" style="background:#ef4444"></div>
+      <div class="lcat" style="color:#ef4444">Immediate Intervention</div>
+      <div class="ldesc">High spike + High vulnerability · Activate hardship plans now</div>
+    </div>
+    <div class="litem" style="background:rgba(249,115,22,0.08);border-color:#f97316">
+      <div class="ldot" style="background:#f97316"></div>
+      <div class="lcat" style="color:#f97316">Demand Response</div>
+      <div class="ldesc">High spike + Low vulnerability · Mobilise load shifting</div>
+    </div>
+    <div class="litem" style="background:rgba(234,179,8,0.08);border-color:#eab308">
+      <div class="ldot" style="background:#eab308"></div>
+      <div class="lcat" style="color:#eab308">Structural Watch</div>
+      <div class="ldesc">Low spike + High vulnerability · Long-term policy target</div>
+    </div>
+    <div class="litem" style="background:rgba(34,197,94,0.08);border-color:#22c55e">
+      <div class="ldot" style="background:#22c55e"></div>
+      <div class="lcat" style="color:#22c55e">Routine Monitoring</div>
+      <div class="ldesc">Low spike + Low vulnerability · Standard surveillance</div>
+    </div>
+  </div>
+  <div class="note">⚠ Simulated data for framework demonstration &nbsp;·&nbsp; Real deployment: AEMO 5-min market feeds + ABS SEIFA 2021 IRSD at SA2 level &nbsp;·&nbsp; Spike threshold: rolling 28-day quantile (adaptive per region)</div>
+</div>
+
+<script>
+const regions = [
+  { name:"Elizabeth",      state:"SA",  vuln:3, lat:-34.718, lng:138.660 },
+  { name:"Salisbury",      state:"SA",  vuln:3, lat:-34.758, lng:138.640 },
+  { name:"Port Adelaide",  state:"SA",  vuln:2, lat:-34.849, lng:138.507 },
+  { name:"Norwood",        state:"SA",  vuln:1, lat:-34.922, lng:138.633 },
+  { name:"Glenelg",        state:"SA",  vuln:1, lat:-34.980, lng:138.517 },
+  { name:"Footscray",      state:"VIC", vuln:3, lat:-37.799, lng:144.899 },
+  { name:"Dandenong",      state:"VIC", vuln:3, lat:-37.987, lng:145.216 },
+  { name:"Frankston",      state:"VIC", vuln:2, lat:-38.144, lng:145.128 },
+  { name:"Brighton",       state:"VIC", vuln:1, lat:-37.907, lng:145.002 },
+  { name:"Geelong",        state:"VIC", vuln:2, lat:-38.150, lng:144.362 },
+  { name:"Western Sydney", state:"NSW", vuln:3, lat:-33.869, lng:150.760 },
+  { name:"Blacktown",      state:"NSW", vuln:3, lat:-33.767, lng:150.905 },
+  { name:"Parramatta",     state:"NSW", vuln:2, lat:-33.815, lng:151.001 },
+  { name:"Liverpool",      state:"NSW", vuln:3, lat:-33.920, lng:150.924 },
+  { name:"North Shore",    state:"NSW", vuln:1, lat:-33.828, lng:151.206 },
+];
+
+// Spike per state (from sliders, 0-1)
+const stateSpike = { SA:0.35, VIC:0.35, NSW:0.35 };
+
+let selIdx = null;
+let activeTab = 'gov';
+const mapMarkers = [];
+
+// Colors
+const clrs = { red:"#ef4444", orange:"#f97316", yellow:"#eab308", green:"#22c55e" };
+
+function spikeOf(r)    { return stateSpike[r.state]; }
+function priorityOf(r) { return spikeOf(r) * r.vuln; }  // raw vuln 1/2/3
+function catOf(spike, vuln) {
+  if (spike > 0.6 && vuln >= 3) return "red";
+  if (spike > 0.6 && vuln <  3) return "orange";
+  if (spike <= 0.6 && vuln >= 3) return "yellow";
+  return "green";
+}
+
+const badges = {
+  red:    { t:"🔴 Immediate Intervention", bg:"rgba(239,68,68,0.12)",  bc:"#ef4444", tc:"#ef4444" },
+  orange: { t:"🟠 Demand Response",        bg:"rgba(249,115,22,0.12)", bc:"#f97316", tc:"#f97316" },
+  yellow: { t:"🟡 Structural Watch",       bg:"rgba(234,179,8,0.12)",  bc:"#eab308", tc:"#eab308" },
+  green:  { t:"🟢 Routine Monitoring",     bg:"rgba(34,197,94,0.12)",  bc:"#22c55e", tc:"#22c55e" },
+};
+
+const actions = {
+  gov: {
+    red:    "Pre-deploy emergency subsidies to concession card holders in this SA2 · Issue 48-hour hardship alert to state energy department · Coordinate with local council for welfare check activation",
+    orange: "Monitor demand response compliance · Prepare voluntary load reduction incentives for this region · No immediate subsidy deployment required",
+    yellow: "Designate as long-term energy assistance priority area · Include in next subsidy scheme targeting review · AEMC to assess adequacy of existing hardship provisions",
+    green:  "Standard consumer protection monitoring · Available for demand response mobilisation if adjacent regions escalate"
+  },
+  retailer: {
+    red:    "Suspend disconnection orders for hardship customers in this region · Proactively contact at-risk accounts before spike arrives · Activate extended payment plan options immediately",
+    orange: "Issue voluntary demand reduction alert to high-usage accounts · Promote off-peak tariff switching · Monitor for spike spillover to adjacent high-vulnerability regions",
+    yellow: "Flag region for enhanced hardship program enrolment drive · Review customer base for unidentified at-risk accounts · Prepare communications template for next spike event",
+    green:  "Standard account management · Candidate pool for demand response incentive programs during high-spike periods elsewhere"
+  },
+  ngo: {
+    red:    "Dispatch field workers to this SA2 immediately · Pre-position emergency bill payment vouchers · Contact food banks and community centres for coordinated welfare response before spike peaks",
+    orange: "No urgent field deployment needed · Prepare contact lists for escalation if spike intensifies · Monitor community feedback channels",
+    yellow: "Priority area for proactive outreach and relationship-building · Map existing community assets and trusted contacts · Apply for targeted funding for long-term energy resilience programs",
+    green:  "Routine community monitoring · Low priority for emergency resource deployment · Available as demand response communication channel"
+  }
+};
+
+// Leaflet map
+const map = L.map('map', { zoomControl:true, scrollWheelZoom:true })
+  .setView([-36.2, 144.5], 6);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'© CartoDB © OpenStreetMap', subdomains:'abcd', maxZoom:19
+}).addTo(map);
+
+// Get top 3 per state by priority
+function getTop3PerState() {
+  const top3 = new Set();
+  ['SA','VIC','NSW'].forEach(st => {
+    const stRegions = regions
+      .map((r,i) => ({i, r, p: priorityOf(r)}))
+      .filter(x => x.r.state === st)
+      .sort((a,b) => b.p - a.p)
+      .slice(0,3);
+    stRegions.forEach(x => top3.add(x.i));
+  });
+  return top3;
+}
+
+function makeIcon(color, isTop, isSel) {
+  const sz = isSel ? 26 : isTop ? 20 : 14;
+  const glow = isSel
+    ? `box-shadow:0 0 16px ${color},0 0 6px ${color};`
+    : isTop
+      ? `box-shadow:0 0 8px ${color};`
+      : '';
+  const border = isSel ? '3px solid white' : isTop ? `2px solid ${color}` : '2px solid rgba(255,255,255,0.2)';
+  return L.divIcon({
+    className:'',
+    html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:${border};${glow}transition:all 0.3s;"></div>`,
+    iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
+  });
+}
+
+regions.forEach((r,i) => {
+  const m = L.marker([r.lat,r.lng], { icon: makeIcon(clrs.green,false,false) }).addTo(map);
+  m.bindTooltip(`<b>${r.name}</b><br>${r.state} · Vulnerability ${r.vuln}/3`,
+    { direction:'top', offset:[0,-6] });
+  m.on('click', () => selectRegion(i));
+  mapMarkers.push(m);
+});
+
+function updateMarkers() {
+  const top3 = getTop3PerState();
+  regions.forEach((r,i) => {
+    const spike = spikeOf(r);
+    const cat = catOf(spike, r.vuln);
+    const isTop = top3.has(i);
+    mapMarkers[i].setIcon(makeIcon(clrs[cat], isTop, selIdx===i));
+  });
+}
+
+function updateRanking() {
+  const sorted = regions
+    .map((r,i) => ({i, r, p: priorityOf(r), cat: catOf(spikeOf(r), r.vuln)}))
+    .sort((a,b) => b.p - a.p)
+    .slice(0,5);
+
+  const el = document.getElementById('ranking');
+  el.innerHTML = sorted.map((x,rank) => `
+    <div class="rank-item" onclick="selectRegion(${x.i})">
+      <div class="rank-num">${rank+1}</div>
+      <div class="rank-dot" style="background:${clrs[x.cat]}"></div>
+      <div class="rank-info">
+        <div class="rank-name">${x.r.name}</div>
+        <div class="rank-sub">${x.r.state} · V${x.r.vuln}/3 · Spike ${(spikeOf(x.r)*100).toFixed(0)}%</div>
+      </div>
+      <div class="rank-score" style="color:${clrs[x.cat]}">${x.p.toFixed(2)}</div>
+    </div>
+  `).join('');
+}
+
+function selectRegion(i) {
+  selIdx = i;
+  updateMarkers();
+
+  const r = regions[i];
+  const spike = spikeOf(r);
+  const cat = catOf(spike, r.vuln);
+  const priority = priorityOf(r);
+  const b = badges[cat];
+
+  document.getElementById('ph').style.display = 'none';
+  document.getElementById('det').classList.add('show');
+  document.getElementById('dn').textContent = r.name;
+  document.getElementById('dm').textContent = `${r.state} · SEIFA Vulnerability Level ${r.vuln}/3 · ${r.state} Spike: ${(spike*100).toFixed(0)}%`;
+
+  document.getElementById('c-spike').textContent = (spike*100).toFixed(1)+'%';
+  const cbs = document.getElementById('cb-spike');
+  cbs.style.width = (spike*100)+'%'; cbs.style.background = clrs[cat];
+
+  document.getElementById('c-vuln').textContent = `${r.vuln} / 3`;
+  document.getElementById('cb-vuln').style.width = ((r.vuln/3)*100)+'%';
+
+  document.getElementById('c-priority').textContent = priority.toFixed(3);
+  const cbadge = document.getElementById('cbadge');
+  cbadge.textContent = b.t;
+  cbadge.style.background = b.bg; cbadge.style.borderColor = b.bc; cbadge.style.color = b.tc;
+
+  document.getElementById('action-stakeholder-label').textContent =
+    `Recommended Action — ${activeTab==='gov'?'Government/Regulator':activeTab==='retailer'?'Retailer':'NGO'}`;
+  document.getElementById('act').textContent = actions[activeTab][cat];
+}
+
+// Slider logic
+const levels = [[0,25,"Low","#22c55e"],[26,50,"Moderate","#eab308"],[51,75,"Elevated","#f97316"],[76,100,"Extreme","#ef4444"]];
+
+['SA','VIC','NSW'].forEach(st => {
+  document.getElementById(`sl-${st}`).addEventListener('input', function() {
+    const v = +this.value;
+    stateSpike[st] = v/100;
+    const lb = document.getElementById(`lb-${st}`);
+    for (const [mn,mx,nm,cl] of levels) {
+      if (v>=mn && v<=mx) { lb.textContent=nm; lb.style.color=cl; }
+    }
+    updateMarkers();
+    updateRanking();
+    if (selIdx !== null) selectRegion(selIdx);
+  });
+});
+
+// Tab logic
+function setTab(tab, el) {
+  activeTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  if (selIdx !== null) selectRegion(selIdx);
+}
+
+// Init
+updateMarkers();
+updateRanking();
+</script>
+</body>
+</html>
